@@ -1,6 +1,7 @@
 import AVFoundation
 import Foundation
 import SwiftUI
+import UIKit
 
 @MainActor
 final class CameraViewModel: ObservableObject {
@@ -8,6 +9,7 @@ final class CameraViewModel: ObservableObject {
     @Published var availableCameras: [CameraOption] = []
     @Published var selectedCameraID: String?
     @Published var currentLook: FilmLook = .surfGlow
+    @Published var previewImage: UIImage?
     @Published var isCapturing = false
     @Published var toast: String?
 
@@ -15,8 +17,14 @@ final class CameraViewModel: ObservableObject {
     private let service: CameraService
 
     init() {
-        service = CameraService()
-        session = service.session
+        let cameraService = CameraService()
+        service = cameraService
+        session = cameraService.session
+        cameraService.onPreviewFrame = { [weak self] image in
+            Task { @MainActor in
+                self?.previewImage = image
+            }
+        }
     }
 
     var currentCameraName: String {
@@ -53,6 +61,7 @@ final class CameraViewModel: ObservableObject {
 
     func selectLook(_ look: FilmLook) {
         currentLook = look
+        service.setPreviewLook(look)
     }
 
     func cycleLook(reverse: Bool) {
@@ -62,7 +71,7 @@ final class CameraViewModel: ObservableObject {
             return
         }
         let nextIndex = reverse ? (index - 1 + looks.count) % looks.count : (index + 1) % looks.count
-        currentLook = looks[nextIndex]
+        selectLook(looks[nextIndex])
     }
 
     func capturePhoto() {

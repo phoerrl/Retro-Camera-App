@@ -1,6 +1,6 @@
 # Retro M
 
-Retro M ist eine SwiftUI-Kamera-App im Stil einer klassischen Messsucherkamera. Sie nutzt AVFoundation für die Live-Vorschau, listet die verfügbaren iPhone-Kameras auf und speichert Fotos mit Core-Image-Filmlooks in der Fotomediathek.
+Retro M ist eine SwiftUI-Kamera-App im Stil einer klassischen Messsucherkamera. Sie nutzt AVFoundation für die Kamera, zeigt den aktuell ausgewählten Filmlook live im Sucher, listet die verfügbaren iPhone-Kameras auf und speichert Fotos mit Core-Image-Filmlooks in der Fotomediathek.
 
 ## Looks
 
@@ -8,6 +8,10 @@ Retro M ist eine SwiftUI-Kamera-App im Stil einer klassischen Messsucherkamera. 
 - Tokyo Chrome: heller Street-Look mit reduziertem Vintage-Kontrast.
 - U-Bahn Neon: kühle Schatten, roter Glow, stärkerer Kontrast.
 - Pacific Gold: 70er-Küstenlook mit warmen Mitten und matterem Schwarz.
+
+## Live-Vorschau
+
+Der Sucher zeigt nicht mehr das rohe Kamerabild. Die App verarbeitet Live-Frames der Kamera mit dem aktuell ausgewählten Look und aktualisiert die Vorschau direkt beim Wechsel des Looks.
 
 ## Öffnen
 

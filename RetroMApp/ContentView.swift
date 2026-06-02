@@ -25,7 +25,7 @@ struct ContentView: View {
             topPlate
 
             ZStack(alignment: .topTrailing) {
-                CameraPreview(session: viewModel.session)
+                liveLookPreview
                     .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                     .overlay(filmOverlay)
                     .overlay(viewfinderFrame)
@@ -55,6 +55,29 @@ struct ContentView: View {
                     .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
+    }
+
+    private var liveLookPreview: some View {
+        ZStack {
+            Color.black
+
+            if let previewImage = viewModel.previewImage {
+                Image(uiImage: previewImage)
+                    .resizable()
+                    .scaledToFill()
+                    .transition(.opacity)
+            } else {
+                VStack(spacing: 12) {
+                    Image(systemName: "camera.viewfinder")
+                        .font(.system(size: 28, weight: .bold))
+                    Text("Sucher startet")
+                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                }
+                .foregroundStyle(Color(red: 0.93, green: 0.88, blue: 0.76).opacity(0.72))
+            }
+        }
+        .aspectRatio(3 / 4, contentMode: .fit)
+        .clipped()
     }
 
     private var topPlate: some View {

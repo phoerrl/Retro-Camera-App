@@ -13,10 +13,16 @@ struct CameraOption: Identifiable, Equatable {
 final class CameraService: NSObject {
     let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "camera.session.queue")
-    private let output = AVCapturePhotoOutput()
+    private let videoQueue = DispatchQueue(label: "camera.video.queue")
+    private let photoOutput = AVCapturePhotoOutput()
+    private let videoOutput = AVCaptureVideoDataOutput()
     private var activeInput: AVCaptureDeviceInput?
     private var pendingCapture: ((Result<Void, Error>) -> Void)?
     private var pendingLook: FilmLook = .surfGlow
+    private var previewLook: FilmLook = .surfGlow
+    private let previewLookLock = NSLock()
+    private var lastPreviewTime = CACurrentMediaTime()
+    var onPreviewFrame: ((UIImage) -> Void)?
 
     private(set) var availableCameras: [CameraOption] = []
     private(set) var selectedCameraID: String?
@@ -44,6 +50,12 @@ final class CameraService: NSObject {
         }
     }
 
+    func setPreviewLook(_ look: FilmLook) {
+        previewLookLock.lock()
+        previewLook = look
+        previewLookLock.unlock()
+    }
+
     func switchToNextCamera() {
         sessionQueue.async {
             guard !self.availableCameras.isEmpty else { return }
@@ -61,7 +73,7 @@ final class CameraService: NSObject {
             let settings = AVCapturePhotoSettings()
             settings.flashMode = .off
             settings.photoQualityPrioritization = .quality
-            self.output.capturePhoto(with: settings, delegate: self)
+            self.photoOutput.capturePhoto(with: settings, delegate: self)
         }
     }
 
@@ -71,9 +83,18 @@ final class CameraService: NSObject {
 
         discoverCameras()
 
-        if session.outputs.isEmpty, session.canAddOutput(output) {
-            output.maxPhotoQualityPrioritization = .quality
-            session.addOutput(output)
+        if !session.outputs.contains(photoOutput), session.canAddOutput(photoOutput) {
+            photoOutput.maxPhotoQualityPrioritization = .quality
+            session.addOutput(photoOutput)
+        }
+
+        if !session.outputs.contains(videoOutput), session.canAddOutput(videoOutput) {
+            videoOutput.videoSettings = [
+                kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA
+            ]
+            videoOutput.alwaysDiscardsLateVideoFrames = true
+            videoOutput.setSampleBufferDelegate(self, queue: videoQueue)
+            session.addOutput(videoOutput)
         }
 
         if let first = availableCameras.first {
@@ -125,6 +146,7 @@ final class CameraService: NSObject {
                 session.addInput(input)
                 activeInput = input
                 selectedCameraID = option.id
+                updateVideoConnection(for: option.device)
             }
 
             if commitConfiguration {
@@ -138,6 +160,23 @@ final class CameraService: NSObject {
     private func displayName(for device: AVCaptureDevice) -> String {
         let side = device.position == .front ? "Front" : "Rück"
         return "\(side) \(device.localizedName)"
+    }
+
+    private func updateVideoConnection(for device: AVCaptureDevice) {
+        guard let connection = videoOutput.connection(with: .video) else { return }
+        if connection.isVideoOrientationSupported {
+            connection.videoOrientation = .portrait
+        }
+        if connection.isVideoMirroringSupported {
+            connection.isVideoMirrored = device.position == .front
+        }
+    }
+
+    private func currentPreviewLook() -> FilmLook {
+        previewLookLock.lock()
+        let look = previewLook
+        previewLookLock.unlock()
+        return look
     }
 
     private func shortName(for device: AVCaptureDevice) -> String {
@@ -198,6 +237,21 @@ extension CameraService: AVCapturePhotoCaptureDelegate {
                 self.pendingCapture = nil
             }
         }
+    }
+}
+
+extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
+    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
+        let now = CACurrentMediaTime()
+        guard now - lastPreviewTime > 1.0 / 15.0 else { return }
+        lastPreviewTime = now
+
+        guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
+              let preview = FilmProcessor.renderPreview(CIImage(cvPixelBuffer: pixelBuffer), look: currentPreviewLook()) else {
+            return
+        }
+
+        onPreviewFrame?(preview)
     }
 }
 

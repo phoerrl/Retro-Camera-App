@@ -58,15 +58,27 @@ enum FilmProcessor {
         guard let input = CIImage(image: image) else { return nil }
 
         let oriented = input.oriented(forExifOrientation: Int32(image.imageOrientation.exifOrientation))
-        var output = applyBaseGrade(to: oriented, look: look)
-        output = applyTemperature(to: output, look: look)
-        output = applyBloom(to: output, look: look)
-        output = applyVignette(to: output, extent: oriented.extent, look: look)
-        output = applyGrain(to: output, extent: oriented.extent, look: look)
-        output = output.cropped(to: oriented.extent)
+        let output = applyFilmRecipe(to: oriented, look: look, includeGrain: true)
 
         guard let cgImage = context.createCGImage(output, from: oriented.extent) else { return nil }
         return UIImage(cgImage: cgImage, scale: image.scale, orientation: .up)
+    }
+
+    static func renderPreview(_ image: CIImage, look: FilmLook) -> UIImage? {
+        let output = applyFilmRecipe(to: image, look: look, includeGrain: true)
+        guard let cgImage = context.createCGImage(output, from: image.extent) else { return nil }
+        return UIImage(cgImage: cgImage)
+    }
+
+    private static func applyFilmRecipe(to image: CIImage, look: FilmLook, includeGrain: Bool) -> CIImage {
+        var output = applyBaseGrade(to: image, look: look)
+        output = applyTemperature(to: output, look: look)
+        output = applyBloom(to: output, look: look)
+        output = applyVignette(to: output, extent: image.extent, look: look)
+        if includeGrain {
+            output = applyGrain(to: output, extent: image.extent, look: look)
+        }
+        return output.cropped(to: image.extent)
     }
 
     private static func applyBaseGrade(to image: CIImage, look: FilmLook) -> CIImage {

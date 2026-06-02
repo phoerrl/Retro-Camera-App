@@ -11,7 +11,16 @@ Retro M ist eine SwiftUI-Kamera-App im Stil einer klassischen Messsucherkamera. 
 
 ## Live-Vorschau
 
-Der Sucher zeigt nicht mehr das rohe Kamerabild. Die App verarbeitet Live-Frames der Kamera mit dem aktuell ausgewählten Look und aktualisiert die Vorschau direkt beim Wechsel des Looks.
+Der Sucher zeigt nicht mehr das rohe Kamerabild. Die App verarbeitet Live-Frames der Kamera mit dem aktuell ausgewählten Look und aktualisiert die Vorschau direkt beim Wechsel des Looks. Für eine flüssigere Vorschau nutzt die App einen schnelleren Preview-Renderer; gespeicherte Fotos werden weiterhin mit dem volleren Filmrezept ausgegeben.
+
+## Kameras
+
+Die Auswahl ist bewusst auf die praktischen Modi beschränkt:
+
+- 0,5
+- 1
+- 2
+- Front
 
 ## Öffnen
 

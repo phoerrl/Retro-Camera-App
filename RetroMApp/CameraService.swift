@@ -1,6 +1,7 @@
 import AVFoundation
 import CoreImage
 import Photos
+import QuartzCore
 import UIKit
 
 struct CameraOption: Identifiable, Equatable {
@@ -79,7 +80,7 @@ final class CameraService: NSObject {
 
     private func configureSession() {
         session.beginConfiguration()
-        session.sessionPreset = .photo
+        session.sessionPreset = .hd1280x720
 
         discoverCameras()
 
@@ -105,30 +106,12 @@ final class CameraService: NSObject {
     }
 
     private func discoverCameras() {
-        let discovery = AVCaptureDevice.DiscoverySession(
-            deviceTypes: [
-                .builtInTripleCamera,
-                .builtInDualWideCamera,
-                .builtInDualCamera,
-                .builtInUltraWideCamera,
-                .builtInWideAngleCamera,
-                .builtInTelephotoCamera,
-                .builtInTrueDepthCamera
-            ],
-            mediaType: .video,
-            position: .unspecified
-        )
-
-        var seen = Set<String>()
-        availableCameras = discovery.devices.compactMap { device in
-            guard seen.insert(device.uniqueID).inserted else { return nil }
-            return CameraOption(
-                id: device.uniqueID,
-                displayName: displayName(for: device),
-                shortName: shortName(for: device),
-                device: device
-            )
-        }
+        availableCameras = [
+            cameraOption(type: .builtInUltraWideCamera, position: .back, displayName: "0,5x Ultraweitwinkel", shortName: "0,5"),
+            cameraOption(type: .builtInWideAngleCamera, position: .back, displayName: "1x Weitwinkel", shortName: "1"),
+            cameraOption(type: .builtInTelephotoCamera, position: .back, displayName: "2x Tele", shortName: "2"),
+            frontCameraOption()
+        ].compactMap { $0 }
     }
 
     private func useCamera(_ option: CameraOption, commitConfiguration: Bool) {
@@ -147,6 +130,7 @@ final class CameraService: NSObject {
                 activeInput = input
                 selectedCameraID = option.id
                 updateVideoConnection(for: option.device)
+                configureFrameRate(for: option.device)
             }
 
             if commitConfiguration {
@@ -157,9 +141,21 @@ final class CameraService: NSObject {
         }
     }
 
-    private func displayName(for device: AVCaptureDevice) -> String {
-        let side = device.position == .front ? "Front" : "Rück"
-        return "\(side) \(device.localizedName)"
+    private func cameraOption(
+        type: AVCaptureDevice.DeviceType,
+        position: AVCaptureDevice.Position,
+        displayName: String,
+        shortName: String
+    ) -> CameraOption? {
+        guard let device = AVCaptureDevice.default(type, for: .video, position: position) else { return nil }
+        return CameraOption(id: device.uniqueID, displayName: displayName, shortName: shortName, device: device)
+    }
+
+    private func frontCameraOption() -> CameraOption? {
+        let device = AVCaptureDevice.default(.builtInTrueDepthCamera, for: .video, position: .front)
+            ?? AVCaptureDevice.default(.builtInWideAngleCamera, for: .video, position: .front)
+        guard let device else { return nil }
+        return CameraOption(id: device.uniqueID, displayName: "Front Camera", shortName: "Front", device: device)
     }
 
     private func updateVideoConnection(for device: AVCaptureDevice) {
@@ -172,6 +168,19 @@ final class CameraService: NSObject {
         }
     }
 
+    private func configureFrameRate(for device: AVCaptureDevice) {
+        do {
+            try device.lockForConfiguration()
+            if device.activeFormat.videoSupportedFrameRateRanges.contains(where: { $0.minFrameRate <= 30 && 30 <= $0.maxFrameRate }) {
+                device.activeVideoMinFrameDuration = CMTime(value: 1, timescale: 30)
+                device.activeVideoMaxFrameDuration = CMTime(value: 1, timescale: 30)
+            }
+            device.unlockForConfiguration()
+        } catch {
+            return
+        }
+    }
+
     private func currentPreviewLook() -> FilmLook {
         previewLookLock.lock()
         let look = previewLook
@@ -179,26 +188,6 @@ final class CameraService: NSObject {
         return look
     }
 
-    private func shortName(for device: AVCaptureDevice) -> String {
-        switch device.deviceType {
-        case .builtInUltraWideCamera:
-            return "0.5x"
-        case .builtInWideAngleCamera:
-            return device.position == .front ? "Front" : "1x"
-        case .builtInTelephotoCamera:
-            return "2x"
-        case .builtInTripleCamera:
-            return "Triple"
-        case .builtInDualWideCamera:
-            return "DualW"
-        case .builtInDualCamera:
-            return "Dual"
-        case .builtInTrueDepthCamera:
-            return "Self"
-        default:
-            return "Cam"
-        }
-    }
 }
 
 extension CameraService: AVCapturePhotoCaptureDelegate {
@@ -243,11 +232,15 @@ extension CameraService: AVCapturePhotoCaptureDelegate {
 extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         let now = CACurrentMediaTime()
-        guard now - lastPreviewTime > 1.0 / 15.0 else { return }
+        guard now - lastPreviewTime > 1.0 / 24.0 else { return }
         lastPreviewTime = now
 
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
-              let preview = FilmProcessor.renderPreview(CIImage(cvPixelBuffer: pixelBuffer), look: currentPreviewLook()) else {
+              let preview = FilmProcessor.renderPreview(
+                CIImage(cvPixelBuffer: pixelBuffer),
+                look: currentPreviewLook(),
+                maxDimension: 720
+              ) else {
             return
         }
 

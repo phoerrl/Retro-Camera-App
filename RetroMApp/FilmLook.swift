@@ -33,7 +33,7 @@ enum FilmLook: String, CaseIterable, Identifiable {
         case .ubahnNeon:
             return "Kühle Schatten, rote Halation, urbaner Nachtfilm."
         case .pacificGold:
-            return "Warme Kueste, matte Schwarztöne, 70er-Farben."
+            return "Warme Küste, matte Schwarztöne, 70er-Farben."
         }
     }
 
@@ -64,10 +64,31 @@ enum FilmProcessor {
         return UIImage(cgImage: cgImage, scale: image.scale, orientation: .up)
     }
 
-    static func renderPreview(_ image: CIImage, look: FilmLook) -> UIImage? {
-        let output = applyFilmRecipe(to: image, look: look, includeGrain: true)
-        guard let cgImage = context.createCGImage(output, from: image.extent) else { return nil }
+    static func renderPreview(_ image: CIImage, look: FilmLook, maxDimension: CGFloat) -> UIImage? {
+        let scale = min(1, maxDimension / max(image.extent.width, image.extent.height))
+        let previewInput = scale < 1 ? image.transformed(by: CGAffineTransform(scaleX: scale, y: scale)) : image
+        let output = applyPreviewRecipe(to: previewInput, look: look)
+            .cropped(to: previewInput.extent)
+
+        guard let cgImage = context.createCGImage(output, from: previewInput.extent) else { return nil }
         return UIImage(cgImage: cgImage)
+    }
+
+    private static func applyPreviewRecipe(to image: CIImage, look: FilmLook) -> CIImage {
+        var output = applyBaseGrade(to: image, look: look)
+        output = applyTemperature(to: output, look: look)
+        output = applyFastGlow(to: output, look: look)
+        output = applyVignette(to: output, extent: image.extent, look: look)
+        return output
+    }
+
+    private static func applyFastGlow(to image: CIImage, look: FilmLook) -> CIImage {
+        let controls = CIFilter.colorControls()
+        controls.inputImage = image
+        controls.saturation = 1.02
+        controls.contrast = look == .ubahnNeon ? 1.06 : 0.98
+        controls.brightness = look == .surfGlow ? 0.025 : 0.0
+        return controls.outputImage ?? image
     }
 
     private static func applyFilmRecipe(to image: CIImage, look: FilmLook, includeGrain: Bool) -> CIImage {

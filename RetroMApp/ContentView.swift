@@ -149,7 +149,7 @@ struct ContentView: View {
                             Text(camera.shortName)
                                 .font(.system(size: 12, weight: .bold, design: .monospaced))
                                 .foregroundStyle(viewModel.selectedCameraID == camera.id ? .black : .white)
-                                .frame(minWidth: 56)
+                                .frame(minWidth: camera.shortName == "Front" ? 74 : 52)
                                 .padding(.vertical, 9)
                                 .background(viewModel.selectedCameraID == camera.id ? Color(red: 0.94, green: 0.86, blue: 0.62) : Color.white.opacity(0.12))
                                 .clipShape(Capsule())

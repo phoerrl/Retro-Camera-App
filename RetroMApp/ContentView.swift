@@ -4,6 +4,8 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel = CameraViewModel()
     @State private var showLookDrawer = false
+    private let topSafeZone: CGFloat = 59
+    private let bottomSafeZone: CGFloat = 34
 
     var body: some View {
         ZStack {
@@ -38,6 +40,8 @@ struct ContentView: View {
 
             controls
         }
+        .padding(.top, topSafeZone)
+        .padding(.bottom, bottomSafeZone)
         .background(cameraLeather)
         .sheet(isPresented: $showLookDrawer) {
             lookPicker

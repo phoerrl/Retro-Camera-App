@@ -4,8 +4,6 @@ import SwiftUI
 struct ContentView: View {
     @StateObject private var viewModel = CameraViewModel()
     @State private var showLookDrawer = false
-    private let topSafeZone: CGFloat = 59
-    private let bottomSafeZone: CGFloat = 34
 
     var body: some View {
         ZStack {
@@ -40,8 +38,6 @@ struct ContentView: View {
 
             controls
         }
-        .padding(.top, topSafeZone)
-        .padding(.bottom, bottomSafeZone)
         .background(cameraLeather)
         .sheet(isPresented: $showLookDrawer) {
             lookPicker
@@ -99,14 +95,10 @@ struct ContentView: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text("RETRO M")
                     .font(.system(size: 18, weight: .black, design: .serif))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
                 Text(viewModel.currentLook.name.uppercased())
                     .font(.system(size: 10, weight: .medium, design: .monospaced))
                     .foregroundStyle(.secondary)
-                    .lineLimit(1)
             }
-            .layoutPriority(1)
 
             Spacer()
 
@@ -157,7 +149,7 @@ struct ContentView: View {
                             Text(camera.shortName)
                                 .font(.system(size: 12, weight: .bold, design: .monospaced))
                                 .foregroundStyle(viewModel.selectedCameraID == camera.id ? .black : .white)
-                                .frame(minWidth: camera.shortName == "Front" ? 74 : 56)
+                                .frame(minWidth: 56)
                                 .padding(.vertical, 9)
                                 .background(viewModel.selectedCameraID == camera.id ? Color(red: 0.94, green: 0.86, blue: 0.62) : Color.white.opacity(0.12))
                                 .clipShape(Capsule())

@@ -21,31 +21,24 @@ struct ContentView: View {
     }
 
     private var cameraBody: some View {
-        GeometryReader { proxy in
-            VStack(spacing: 0) {
-                topPlate
+        VStack(spacing: 0) {
+            topPlate
 
-                ZStack(alignment: .topTrailing) {
-                    liveLookPreview
-                        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
-                        .overlay(filmOverlay)
-                        .overlay(viewfinderFrame)
-                        .padding(.horizontal, 12)
-                        .padding(.top, 6)
+            ZStack(alignment: .topTrailing) {
+                liveLookPreview
+                    .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .overlay(filmOverlay)
+                    .overlay(viewfinderFrame)
+                    .padding(.horizontal, 12)
 
-                    exposureBadge
-                        .padding(.top, 22)
-                        .padding(.trailing, 26)
-                }
-                .frame(maxHeight: .infinity)
-                .clipped()
-
-                controls(bottomInset: proxy.safeAreaInsets.bottom)
+                exposureBadge
+                    .padding(.top, 16)
+                    .padding(.trailing, 26)
             }
-            .padding(.top, max(proxy.safeAreaInsets.top, 18))
-            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
-            .background(cameraLeather)
+
+            controls
         }
+        .background(cameraLeather)
         .sheet(isPresented: $showLookDrawer) {
             lookPicker
                 .presentationDetents([.height(260)])
@@ -88,24 +81,24 @@ struct ContentView: View {
     }
 
     private var topPlate: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 16) {
             ZStack {
                 Circle()
                     .fill(Color(red: 0.78, green: 0.02, blue: 0.02))
-                    .frame(width: 38, height: 38)
+                    .frame(width: 42, height: 42)
                     .shadow(color: .black.opacity(0.45), radius: 6, y: 3)
                 Text("M")
-                    .font(.system(size: 17, weight: .black, design: .serif))
+                    .font(.system(size: 19, weight: .black, design: .serif))
                     .foregroundStyle(.white)
             }
 
             VStack(alignment: .leading, spacing: 1) {
                 Text("RETRO M")
-                    .font(.system(size: 16, weight: .black, design: .serif))
+                    .font(.system(size: 18, weight: .black, design: .serif))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+                    .minimumScaleFactor(0.8)
                 Text(viewModel.currentLook.name.uppercased())
-                    .font(.system(size: 9, weight: .medium, design: .monospaced))
+                    .font(.system(size: 10, weight: .medium, design: .monospaced))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)
             }
@@ -117,8 +110,8 @@ struct ContentView: View {
                 viewModel.switchCamera()
             } label: {
                 Image(systemName: "camera.aperture")
-                    .font(.system(size: 16, weight: .semibold))
-                    .frame(width: 38, height: 38)
+                    .font(.system(size: 18, weight: .semibold))
+                    .frame(width: 44, height: 44)
                     .background(Color.black.opacity(0.16), in: Circle())
             }
             .accessibilityLabel("Kamera wechseln")
@@ -127,16 +120,16 @@ struct ContentView: View {
                 showLookDrawer = true
             } label: {
                 Image(systemName: "film")
-                    .font(.system(size: 16, weight: .semibold))
-                    .frame(width: 38, height: 38)
+                    .font(.system(size: 18, weight: .semibold))
+                    .frame(width: 44, height: 44)
                     .background(Color.black.opacity(0.16), in: Circle())
             }
             .accessibilityLabel("Filmlook wählen")
         }
         .foregroundStyle(Color(red: 0.92, green: 0.88, blue: 0.78))
-        .padding(.horizontal, 14)
-        .padding(.top, 6)
-        .padding(.bottom, 8)
+        .padding(.horizontal, 18)
+        .padding(.top, 12)
+        .padding(.bottom, 10)
         .background(
             LinearGradient(
                 colors: [
@@ -149,8 +142,8 @@ struct ContentView: View {
         )
     }
 
-    private func controls(bottomInset: CGFloat) -> some View {
-        VStack(spacing: 10) {
+    private var controls: some View {
+        VStack(spacing: 14) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(viewModel.availableCameras) { camera in
@@ -160,8 +153,8 @@ struct ContentView: View {
                             Text(camera.shortName)
                                 .font(.system(size: 12, weight: .bold, design: .monospaced))
                                 .foregroundStyle(viewModel.selectedCameraID == camera.id ? .black : .white)
-                                .frame(minWidth: camera.shortName == "Front" ? 70 : 50)
-                                .padding(.vertical, 8)
+                                .frame(minWidth: camera.shortName == "Front" ? 74 : 56)
+                                .padding(.vertical, 9)
                                 .background(viewModel.selectedCameraID == camera.id ? Color(red: 0.94, green: 0.86, blue: 0.62) : Color.white.opacity(0.12))
                                 .clipShape(Capsule())
                         }
@@ -175,8 +168,8 @@ struct ContentView: View {
                     viewModel.cycleLook(reverse: true)
                 } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 18, weight: .bold))
-                        .frame(width: 50, height: 50)
+                        .font(.system(size: 19, weight: .bold))
+                        .frame(width: 54, height: 54)
                         .background(Color.white.opacity(0.08), in: Circle())
                 }
                 .accessibilityLabel("Vorheriger Look")
@@ -189,10 +182,10 @@ struct ContentView: View {
                     ZStack {
                         Circle()
                             .stroke(Color(red: 0.93, green: 0.88, blue: 0.76), lineWidth: 5)
-                            .frame(width: 72, height: 72)
+                            .frame(width: 82, height: 82)
                         Circle()
                             .fill(viewModel.isCapturing ? Color(red: 0.8, green: 0.02, blue: 0.02) : Color(red: 0.16, green: 0.15, blue: 0.13))
-                            .frame(width: 58, height: 58)
+                            .frame(width: 66, height: 66)
                     }
                 }
                 .accessibilityLabel("Foto aufnehmen")
@@ -203,8 +196,8 @@ struct ContentView: View {
                     viewModel.cycleLook(reverse: false)
                 } label: {
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 18, weight: .bold))
-                        .frame(width: 50, height: 50)
+                        .font(.system(size: 19, weight: .bold))
+                        .frame(width: 54, height: 54)
                         .background(Color.white.opacity(0.08), in: Circle())
                 }
                 .accessibilityLabel("Nächster Look")
@@ -217,9 +210,9 @@ struct ContentView: View {
                 .foregroundStyle(Color(red: 0.72, green: 0.68, blue: 0.58))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
-                .padding(.bottom, max(bottomInset, 8))
+                .padding(.bottom, 10)
         }
-        .padding(.top, 10)
+        .padding(.top, 12)
         .background(Color(red: 0.07, green: 0.065, blue: 0.055))
     }
 

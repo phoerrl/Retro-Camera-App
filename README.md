@@ -13,10 +13,6 @@ Retro M ist eine SwiftUI-Kamera-App im Stil einer klassischen Messsucherkamera. 
 
 Der Sucher zeigt nicht mehr das rohe Kamerabild. Die App verarbeitet Live-Frames der Kamera mit dem aktuell ausgewählten Look und aktualisiert die Vorschau direkt beim Wechsel des Looks. Für eine flüssigere Vorschau nutzt die App einen schnellen Preview-Renderer mit kleinerer Rendergröße und 30-fps-Ziel; gespeicherte Fotos werden weiterhin mit dem volleren Filmrezept ausgegeben.
 
-## Layout
-
-Die Kameraoberfläche berücksichtigt die Safe Areas moderner iPhones, inklusive Dynamic Island. Die obere Retro-Leiste und die unteren Controls sind kompakter, damit auf Geräten wie dem iPhone 15 Pro keine Informationen abgeschnitten werden.
-
 ## Kameras
 
 Die Auswahl ist bewusst auf die praktischen Modi beschränkt:
@@ -29,7 +25,7 @@ Die Auswahl ist bewusst auf die praktischen Modi beschränkt:
 ## Öffnen
 
 1. `RetroM.xcodeproj` in Xcode öffnen.
-2. Unter `Signing & Capabilities` ein eigenes Team waehlen.
-3. Auf einem echten iPhone starten. Im Simulator steht keine echte Kamera zur Verfuegung.
+2. Unter `Signing & Capabilities` ein eigenes Team wählen.
+3. Auf einem echten iPhone starten. Im Simulator steht keine echte Kamera zur Verfügung.
 
 Die App enthält die benötigten Einträge für Kamera- und Foto-Berechtigungen in `Info.plist`.

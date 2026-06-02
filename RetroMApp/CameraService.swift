@@ -14,7 +14,7 @@ struct CameraOption: Identifiable, Equatable {
 final class CameraService: NSObject {
     let session = AVCaptureSession()
     private let sessionQueue = DispatchQueue(label: "camera.session.queue")
-    private let videoQueue = DispatchQueue(label: "camera.video.queue")
+    private let videoQueue = DispatchQueue(label: "camera.video.queue", qos: .userInteractive)
     private let photoOutput = AVCapturePhotoOutput()
     private let videoOutput = AVCaptureVideoDataOutput()
     private var activeInput: AVCaptureDeviceInput?
@@ -232,14 +232,14 @@ extension CameraService: AVCapturePhotoCaptureDelegate {
 extension CameraService: AVCaptureVideoDataOutputSampleBufferDelegate {
     func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
         let now = CACurrentMediaTime()
-        guard now - lastPreviewTime > 1.0 / 24.0 else { return }
+        guard now - lastPreviewTime > 1.0 / 30.0 else { return }
         lastPreviewTime = now
 
         guard let pixelBuffer = CMSampleBufferGetImageBuffer(sampleBuffer),
               let preview = FilmProcessor.renderPreview(
                 CIImage(cvPixelBuffer: pixelBuffer),
                 look: currentPreviewLook(),
-                maxDimension: 720
+                maxDimension: 480
               ) else {
             return
         }

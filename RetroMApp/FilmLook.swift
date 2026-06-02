@@ -78,7 +78,6 @@ enum FilmProcessor {
         var output = applyBaseGrade(to: image, look: look)
         output = applyTemperature(to: output, look: look)
         output = applyFastGlow(to: output, look: look)
-        output = applyVignette(to: output, extent: image.extent, look: look)
         return output
     }
 
